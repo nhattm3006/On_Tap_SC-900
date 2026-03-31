@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ôn tập SC-900</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.1/dist/full.min.css" rel="stylesheet" />
+    <script src="data.js"></script>
+</head>
+<body id="app-body" class="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center min-h-screen text-gray-200">
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="bg-gray-700 shadow-2xl border border-blue-500 rounded-xl p-10 max-w-lg w-full text-center">
+        <h1 class="text-3xl font-extrabold text-blue-400 mb-8">Ôn tập kiến thức chứng chỉ SC-900</h1>
+        <input
+            id="username"
+            type="text"
+            placeholder="Nhập tên của bạn"
+            class="input input-bordered w-3/4 mb-6 text-center focus:outline-none focus:ring focus:ring-blue-500 rounded-lg h-14 text-white font-bold text-xl"
+        >
+        <br>
+        <button
+            id="start-button"
+            class="btn w-3/4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg h-14 border-none mt-2"
+        >Bắt đầu</button>
+    </div>
+
+    <!-- Main Screen (hidden initially) -->
+    <div id="main-screen" style="display:none;" class="bg-white min-h-screen w-full text-gray-900">
+        <nav class="bg-gray-800 text-white py-4 px-6">
+            <ul class="flex justify-center items-center space-x-8">
+                <li><button id="tab-practice" class="tab-button px-4 py-2 rounded-lg font-semibold hover:bg-gray-600">Luyện tập (DUMP)</button></li>
+                <li><button id="tab-practice-ai" class="tab-button px-4 py-2 rounded-lg font-semibold hover:bg-gray-600">Luyện tập (AI)</button></li>
+                <li><button id="tab-history" class="tab-button px-4 py-2 rounded-lg font-semibold hover:bg-gray-600">Lịch sử làm bài</button></li>
+                <li><button id="tab-guide" class="tab-button bg-blue-500 px-4 py-2 rounded-lg font-semibold">Hướng dẫn sử dụng</button></li>
+                <li class="ml-8"><span id="welcome-message" class="text-white font-semibold text-lg"></span></li>
+            </ul>
+        </nav>
+
+        <div id="content-practice" class="tab-content" style="display:none;">
+            <div id="practice-start-wrapper" class="flex items-center justify-center" style="min-height: calc(100vh - 64px);">
+                <button id="start-practice" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg px-10 py-4 text-xl cursor-pointer">Làm bài thi thử</button>
+            </div>
+            <div id="practice-questions" class="px-8 pb-8 pt-10 max-w-3xl mx-auto"></div>
+            <!-- Fixed status box -->
+            <div id="status-box" style="display:none; position:fixed; top:80px; right:24px; width:190px;" class="bg-white border border-blue-300 rounded-xl shadow-lg p-4 text-center">
+                <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Tiến độ</p>
+                <p class="text-3xl font-extrabold text-blue-500" id="status-answered">0</p>
+                <p class="text-sm text-gray-500 mb-2">/ <span id="status-total">40</span> câu</p>
+                <div class="bg-gray-200 rounded-full h-2 mb-3">
+                    <div id="status-bar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width:0%"></div>
+                </div>
+                <div id="status-result" style="display:none;" class="text-left space-y-1 mt-2 border-t pt-3">
+                    <p class="text-xs flex justify-between"><span class="text-green-600 font-semibold">✅ Đúng</span><span id="res-correct" class="font-bold">0</span></p>
+                    <p class="text-xs flex justify-between"><span class="text-yellow-500 font-semibold">⚠️ Một phần</span><span id="res-partial" class="font-bold">0</span></p>
+                    <p class="text-xs flex justify-between"><span class="text-red-500 font-semibold">❌ Sai</span><span id="res-wrong" class="font-bold">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-history" class="tab-content p-8" style="display:none;">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-700">Lịch sử làm bài</h2>
+                <div class="flex gap-2">
+                    <button class="bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-6 py-2 text-sm" onclick="document.getElementById('upload-submissions').click()">⬆ Tải bài làm</button>
+                    <input id="upload-submissions" type="file" accept=".json" multiple style="display:none" onchange="handleUploadSubmissions(this)">
+                    <button id="btn-analyze" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg px-6 py-2 text-sm" onclick="openAnalyzeModal()">🔍 Phân tích kết quả</button>
+                </div>
+            </div>
+            <div id="history-list"></div>
+        </div>
+
+        <!-- Analyze Modal -->
+        <div id="analyze-modal" style="display:none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
+                <div class="flex items-center justify-between px-6 py-4 border-b">
+                    <h3 class="text-lg font-bold text-gray-800">🔍 Phân tích kết quả bằng Gemini AI</h3>
+                    <button onclick="closeAnalyzeModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+                </div>
+                <div class="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+                    <!-- API Key section -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Gemini API Key</label>
+                        <div class="flex gap-2">
+                            <input id="gemini-api-key" type="password" placeholder="Nhập API Key của bạn..." class="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-400">
+                            <button id="btn-check-key" onclick="checkGeminiKey()" class="bg-gray-700 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg px-4 py-2 whitespace-nowrap">Kiểm tra API Key</button>
+                        </div>
+                        <div id="key-status" class="mt-2 text-sm"></div>
+                    </div>
+                    <!-- Analyze button -->
+                    <div class="flex justify-center">
+                        <button id="btn-run-analyze" onclick="runGeminiAnalysis()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg px-8 py-3 text-sm">🚀 Phân tích</button>
+                    </div>
+                    <!-- Result area -->
+                    <div id="analyze-result" class="hidden">
+                        <div class="border border-purple-200 bg-purple-50 rounded-xl p-5">
+                            <h4 class="font-bold text-purple-800 mb-2">Kết quả phân tích</h4>
+                            <div id="analyze-content" class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Test Modal -->
+        <div id="review-modal" style="display:none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col">
+                <div class="flex items-center justify-between px-6 py-4 border-b">
+                    <h3 id="review-modal-title" class="text-lg font-bold text-gray-800">📋 Xem lại bài làm</h3>
+                    <button onclick="document.getElementById('review-modal').style.display='none'" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+                </div>
+                <div id="review-modal-body" class="px-6 py-5 overflow-y-auto flex-1"></div>
+            </div>
+        </div>
+
+        <div id="content-practice-ai" class="tab-content" style="display:none;">
+            <!-- AI Start screen -->
+            <div id="ai-start-wrapper" class="flex items-center justify-center" style="min-height: calc(100vh - 64px);">
+                <div class="bg-gray-50 border border-gray-200 rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">🤖 Luyện tập (AI)</h2>
+                    <p class="text-sm text-gray-500 mb-5">Gemini AI sẽ tạo ngẫu nhiên 40 câu hỏi ôn tập SC-900 cho bạn</p>
+                    <div class="text-left mb-4">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Gemini API Key</label>
+                        <input id="ai-gemini-key" type="password" placeholder="Nhập API Key..." class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    </div>
+                    <button id="btn-generate-ai" onclick="generateAIQuestions()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg px-8 py-3 text-base">🚀 Tạo bộ đề & Bắt đầu</button>
+                    <div id="ai-gen-status" class="mt-3 text-sm"></div>
+                </div>
+            </div>
+            <!-- AI Questions area -->
+            <div id="ai-questions" class="px-8 pb-8 pt-10 max-w-3xl mx-auto"></div>
+            <!-- AI Status box -->
+            <div id="ai-status-box" style="display:none; position:fixed; top:80px; right:24px; width:190px;" class="bg-white border border-blue-300 rounded-xl shadow-lg p-4 text-center">
+                <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Tiến độ (AI)</p>
+                <p class="text-3xl font-extrabold text-blue-500" id="ai-status-answered">0</p>
+                <p class="text-sm text-gray-500 mb-2">/ <span id="ai-status-total">40</span> câu</p>
+                <div class="bg-gray-200 rounded-full h-2 mb-3">
+                    <div id="ai-status-bar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width:0%"></div>
+                </div>
+                <div id="ai-status-result" style="display:none;" class="text-left space-y-1 mt-2 border-t pt-3">
+                    <p class="text-xs flex justify-between"><span class="text-green-600 font-semibold">✅ Đúng</span><span id="ai-res-correct" class="font-bold">0</span></p>
+                    <p class="text-xs flex justify-between"><span class="text-yellow-500 font-semibold">⚠️ Một phần</span><span id="ai-res-partial" class="font-bold">0</span></p>
+                    <p class="text-xs flex justify-between"><span class="text-red-500 font-semibold">❌ Sai</span><span id="ai-res-wrong" class="font-bold">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-guide" class="tab-content p-8">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">📖 Hướng dẫn sử dụng</h2>
+
+                <!-- Giới thiệu -->
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6">
+                    <h3 class="text-lg font-bold text-blue-700 mb-2">🌟 Giới thiệu</h3>
+                    <p class="text-sm text-gray-700 leading-relaxed">Ứng dụng <strong>Ôn tập SC-900</strong> giúp bạn luyện tập và ôn thi chứng chỉ <strong>Microsoft SC-900 (Security, Compliance, and Identity Fundamentals)</strong>. Ứng dụng cung cấp hai chế độ luyện tập, hệ thống lưu lịch sử và phân tích kết quả bằng AI.</p>
+                </div>
+
+                <!-- Tab 1: Luyện tập DUMP -->
+                <div class="bg-white border border-gray-200 rounded-xl p-5 mb-4">
+                    <h3 class="text-base font-bold text-gray-800 mb-2">📝 1. Luyện tập (DUMP)</h3>
+                    <ul class="text-sm text-gray-600 space-y-2 list-disc ml-5">
+                        <li>Bấm tab <strong>"Luyện tập (DUMP)"</strong>, sau đó bấm nút <strong>"Làm bài thi thử"</strong> để bắt đầu.</li>
+                        <li>Hệ thống sẽ chọn ngẫu nhiên <strong>40 câu hỏi</strong> từ ngân hàng đề có sẵn (dump).</li>
+                        <li>Có 3 dạng câu hỏi: <strong>Đúng/Sai</strong>, <strong>Chọn 1 đáp án</strong>, và <strong>Chọn nhiều đáp án</strong>.</li>
+                        <li>Thanh <strong>tiến độ</strong> bên phải màn hình hiển thị số câu đã trả lời.</li>
+                        <li>Bấm <strong>"Hoàn thành"</strong> để chấm điểm. Hệ thống sẽ:
+                            <ul class="list-disc ml-5 mt-1">
+                                <li>Tô màu viền câu hỏi: <span class="text-green-600 font-semibold">xanh = đúng</span>, <span class="text-yellow-500 font-semibold">vàng = đúng một phần</span>, <span class="text-red-500 font-semibold">đỏ = sai</span></li>
+                                <li>Hiển thị đáp án đúng và giải thích (nếu có)</li>
+                                <li>Tự động lưu kết quả vào <strong>Lịch sử làm bài</strong></li>
+                            </ul>
+                        </li>
+                        <li>Bấm <strong>"⬇ Tải xuống bài làm"</strong> để lưu bài làm thành file JSON.</li>
+                        <li>Bấm <strong>"Làm bài thi mới"</strong> để bắt đầu lại với bộ câu hỏi mới.</li>
+                    </ul>
+                </div>
+
+                <!-- Tab 2: Luyện tập AI -->
+                <div class="bg-white border border-gray-200 rounded-xl p-5 mb-4">
+                    <h3 class="text-base font-bold text-gray-800 mb-2">🤖 2. Luyện tập (AI)</h3>
+                    <ul class="text-sm text-gray-600 space-y-2 list-disc ml-5">
+                        <li>Bấm tab <strong>"Luyện tập (AI)"</strong>, nhập <strong>Gemini API Key</strong> của bạn.</li>
+                        <li>Bấm <strong>"🚀 Tạo bộ đề & Bắt đầu"</strong> — Gemini AI sẽ tạo ngẫu nhiên 40 câu hỏi SC-900 hoàn toàn mới.</li>
+                        <li>Giao diện làm bài giống chế độ DUMP. Bấm <strong>"Hoàn thành"</strong> để chấm điểm.</li>
+                        <li>⚠️ Kết quả <strong>không được lưu</strong> vào lịch sử (vì câu hỏi do AI tạo).</li>
+                        <li>Bấm <strong>"⬇ Tải bộ đề"</strong> để lưu bộ câu hỏi AI thành file JSON.</li>
+                        <li>Bấm <strong>"⬇ Tải xuống bài làm"</strong> để lưu bài làm thành file JSON.</li>
+                        <li>💡 <strong>Lấy Gemini API Key miễn phí:</strong> Truy cập <a href="https://aistudio.google.com/apikey" target="_blank" class="text-blue-600 underline">aistudio.google.com/apikey</a>, đăng nhập Google và tạo key.</li>
+                    </ul>
+                </div>
+
+                <!-- Tab 3: Lịch sử làm bài -->
+                <div class="bg-white border border-gray-200 rounded-xl p-5 mb-4">
+                    <h3 class="text-base font-bold text-gray-800 mb-2">📊 3. Lịch sử làm bài</h3>
+                    <ul class="text-sm text-gray-600 space-y-2 list-disc ml-5">
+                        <li>Hiển thị bảng tổng hợp tất cả các bài thi đã làm (chế độ DUMP), bao gồm: mã bài thi, người làm, thời gian, số câu đúng/sai, tỉ lệ đúng.</li>
+                        <li><strong>Bấm vào mã bài thi</strong> (ID) để xem lại chi tiết bài làm trong cửa sổ nổi: từng câu hỏi, lựa chọn của bạn, đáp án đúng và giải thích.</li>
+                        <li><strong>"⬆ Tải bài làm"</strong>: Tải lên file JSON bài làm đã xuất từ các tab luyện tập. Hỗ trợ chọn nhiều file cùng lúc.</li>
+                        <li><strong>"🔍 Phân tích kết quả"</strong>: Sử dụng Gemini AI để phân tích tổng hợp kết quả làm bài:
+                            <ul class="list-disc ml-5 mt-1">
+                                <li>Nhập Gemini API Key, bấm <strong>"Kiểm tra API Key"</strong> để xác minh</li>
+                                <li>Bấm <strong>"🚀 Phân tích"</strong> để AI đánh giá điểm yếu, phân loại theo chủ đề SC-900 và đưa ra khuyến nghị ôn tập</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Loại câu hỏi -->
+                <div class="bg-white border border-gray-200 rounded-xl p-5 mb-4">
+                    <h3 class="text-base font-bold text-gray-800 mb-2">❓ 4. Các dạng câu hỏi</h3>
+                    <ul class="text-sm text-gray-600 space-y-2 list-disc ml-5">
+                        <li><strong>True False (Đúng/Sai):</strong> Chọn YES hoặc NO. Chỉ được chọn 1 đáp án.</li>
+                        <li><strong>Choose the correct answer:</strong> Chọn 1 đáp án đúng từ danh sách các lựa chọn.</li>
+                        <li><strong>Multiple Choices:</strong> Chọn <strong>nhiều đáp án đúng</strong>. Bấm lại để bỏ chọn. Chỉ được tính đúng hoàn toàn khi chọn đủ và đúng tất cả các đáp án.</li>
+                    </ul>
+                </div>
+
+                <!-- Mẹo -->
+                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-5 mb-4">
+                    <h3 class="text-base font-bold text-yellow-700 mb-2">💡 5. Mẹo sử dụng</h3>
+                    <ul class="text-sm text-gray-600 space-y-2 list-disc ml-5">
+                        <li>Làm nhiều bài thi DUMP để hệ thống lưu lịch sử, sau đó dùng <strong>Phân tích kết quả</strong> để biết điểm yếu cần ôn.</li>
+                        <li>Sử dụng chế độ AI để luyện thêm câu hỏi mới ngoài ngân hàng đề dump.</li>
+                        <li>Tải xuống bài làm để lưu trữ hoặc chia sẻ với bạn bè, sau đó dùng <strong>"Tải bài làm"</strong> để import lại.</li>
+                        <li>Dữ liệu lịch sử được lưu trong <strong>Local Storage</strong> của trình duyệt. Xóa dữ liệu trình duyệt sẽ mất lịch sử.</li>
+                        <li>Gemini API Key <strong>chỉ được lưu trong bộ nhớ RAM</strong> (không lưu vào Local Storage) để bảo mật. Key sẽ mất khi bạn tải lại trang và cần nhập lại.</li>
+                    </ul>
+                </div>
+
+                <!-- SC-900 overview -->
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-4">
+                    <h3 class="text-base font-bold text-gray-800 mb-2">🎓 6. Về chứng chỉ SC-900</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">Chứng chỉ <strong>Microsoft SC-900</strong> kiểm tra kiến thức nền tảng về bảo mật, tuân thủ và quản lý danh tính trong hệ sinh thái Microsoft. Các chủ đề chính:</p>
+                    <ul class="text-sm text-gray-600 space-y-1 list-disc ml-5 mt-2">
+                        <li><strong>Concepts of Security, Compliance, and Identity</strong> (10–15%)</li>
+                        <li><strong>Microsoft Entra (Azure AD)</strong> — Identity & Access Management (25–30%)</li>
+                        <li><strong>Microsoft Security Solutions</strong> — Defender, Sentinel, etc. (25–30%)</li>
+                        <li><strong>Microsoft Compliance Solutions</strong> — Purview, Compliance Manager (25–30%)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ---- Start Screen ----
+        document.getElementById('start-button').addEventListener('click', () => {
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                alert('Vui lòng nhập tên của bạn!');
+                return;
+            }
+            document.getElementById('welcome-message').textContent = `Xin chào, ${username}`;
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('main-screen').style.display = 'block';
+            const body = document.getElementById('app-body');
+            body.classList.remove('flex', 'items-center', 'justify-center');
+            body.classList.add('block');
+            // Show guide tab first
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('bg-blue-500'));
+            document.getElementById('tab-guide').classList.add('bg-blue-500');
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            document.getElementById('content-guide').style.display = 'block';
+        });
+
+        // ---- Tab switching ----
+        function escHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = String(str);
+            return div.innerHTML;
+        }
+
+        const tabMap = {
+            'tab-practice': 'content-practice',
+            'tab-practice-ai': 'content-practice-ai',
+            'tab-history': 'content-history',
+            'tab-guide': 'content-guide',
+        };
+
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('bg-blue-500'));
+                btn.classList.add('bg-blue-500');
+                document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+                document.getElementById(tabMap[btn.id]).style.display = 'block';
+                if (btn.id === 'tab-history') renderHistory();
+            });
+        });
+
+        function renderHistory() {
+            const container = document.getElementById('history-list');
+            const history = JSON.parse(localStorage.getItem('sc900_history') || '[]');
+            if (history.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Chưa có lịch sử làm bài.</p>';
+                return;
+            }
+            // Show newest first
+            const sorted = [...history].reverse();
+            container.innerHTML = `
+                <div class="overflow-x-auto">
+                    <table class="table-auto w-full border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 uppercase text-xs">
+                                <th class="px-4 py-3 text-left">#</th>
+                                <th class="px-4 py-3 text-left">Mã bài thi</th>
+                                <th class="px-4 py-3 text-left">Người làm</th>
+                                <th class="px-4 py-3 text-left">Thời gian</th>
+                                <th class="px-4 py-3 text-center">Tổng câu</th>
+                                <th class="px-4 py-3 text-center text-green-600">✅ Đúng</th>
+                                <th class="px-4 py-3 text-center text-yellow-500">⚠️ Một phần</th>
+                                <th class="px-4 py-3 text-center text-red-500">❌ Sai</th>
+                                <th class="px-4 py-3 text-center">Tỉ lệ đúng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sorted.map((item, i) => {
+                                const d = new Date(item.date);
+                                const dateStr = d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
+                                const sC = Number(item.summary.correct) || 0, sP = Number(item.summary.partial) || 0, sW = Number(item.summary.wrong) || 0, sT = Number(item.summary.total) || 0;
+                                const pct = sT > 0 ? Math.round(sC / sT * 100) : 0;
+                                const pctColor = pct >= 70 ? 'text-green-600' : pct >= 50 ? 'text-yellow-600' : 'text-red-600';
+                                return `<tr class="border-b border-gray-200 hover:bg-gray-50">
+                                    <td class="px-4 py-3 text-gray-500">${i + 1}</td>
+                                    <td class="px-4 py-3 font-mono font-semibold text-blue-600 cursor-pointer hover:underline" onclick="viewTestDetail('${escHtml(item.id)}')">${escHtml(item.id)}</td>
+                                    <td class="px-4 py-3">${escHtml(item.username || '-')}</td>
+                                    <td class="px-4 py-3 text-gray-500">${dateStr}</td>
+                                    <td class="px-4 py-3 text-center font-semibold">${sT}</td>
+                                    <td class="px-4 py-3 text-center font-semibold text-green-600">${sC}</td>
+                                    <td class="px-4 py-3 text-center font-semibold text-yellow-500">${sP}</td>
+                                    <td class="px-4 py-3 text-center font-semibold text-red-500">${sW}</td>
+                                    <td class="px-4 py-3 text-center font-bold ${pctColor}">${pct}%</td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // ---- Option selection styling ----
+        const answeredQuestions = new Set();
+
+        function updateStatus(total) {
+            const count = answeredQuestions.size;
+            document.getElementById('status-answered').textContent = count;
+            document.getElementById('status-total').textContent = total;
+            document.getElementById('status-bar').style.width = (count / total * 100) + '%';
+        }
+
+        function attachOptionListeners(container, total) {
+            // Single-select (radio style)
+            container.querySelectorAll('.opt-single').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const group = btn.dataset.group;
+                    container.querySelectorAll(`.opt-single[data-group="${group}"]`).forEach(b => {
+                        b.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
+                        b.classList.add('bg-white', 'text-gray-800', 'border-gray-300');
+                    });
+                    btn.classList.remove('bg-white', 'text-gray-800', 'border-gray-300');
+                    btn.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+                    btn.dataset.selected = 'true';
+                    answeredQuestions.add(group);
+                    updateStatus(total);
+                });
+            });
+            // Multi-select (checkbox style)
+            container.querySelectorAll('.opt-multi').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const group = btn.dataset.group;
+                    if (btn.dataset.selected === 'true') {
+                        btn.dataset.selected = 'false';
+                        btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
+                        btn.classList.add('bg-white', 'text-gray-800', 'border-gray-300');
+                    } else {
+                        btn.dataset.selected = 'true';
+                        btn.classList.remove('bg-white', 'text-gray-800', 'border-gray-300');
+                        btn.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+                    }
+                    const anySelected = [...container.querySelectorAll(`.opt-multi[data-group="${group}"]`)]
+                        .some(b => b.dataset.selected === 'true');
+                    if (anySelected) answeredQuestions.add(group);
+                    else answeredQuestions.delete(group);
+                    updateStatus(total);
+                });
+            });
+        }
+
+        const OPT_BASE = 'px-4 py-2 rounded-lg border text-sm font-medium cursor-pointer transition-colors duration-150';
+        const OPT_DEFAULT = 'bg-white text-gray-800 border-gray-300';
+
+        function generateTestId() {
+            const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let id = '';
+            for (let i = 0; i < 6; i++) id += chars.charAt(Math.floor(Math.random() * chars.length));
+            return id;
+        }
+
+        function collectSubmission(container, sourceQuestions) {
+            const results = [];
+            container.querySelectorAll('[data-qindex]').forEach(box => {
+                const idx = Number(box.dataset.qindex);
+                const t = box.dataset.type;
+                const correctAnswer = JSON.parse(box.dataset.answer);
+                const isM = t === 'Multiple Choices' || t === 'Multiple Choice' || t === 'multiple choice';
+                const isTf = t === 'True False' || t === 'True or False';
+                let userSelection = null;
+
+                if (isM) {
+                    userSelection = [...box.querySelectorAll('.opt-multi')]
+                        .filter(b => b.dataset.selected === 'true').map(b => b.dataset.value);
+                } else if (isTf || t === 'Choose the correct answer') {
+                    const sel = box.querySelector('.opt-single[data-selected="true"]');
+                    userSelection = sel ? sel.dataset.value : null;
+                } else {
+                    const ta = box.querySelector('textarea');
+                    userSelection = ta ? ta.value : null;
+                }
+
+                let result = 'wrong';
+                if (box.classList.contains('border-green-500')) result = 'correct';
+                else if (box.classList.contains('border-yellow-400')) result = 'partial';
+
+                const q = sourceQuestions[idx] || {};
+                results.push({
+                    question: q.question || '',
+                    type: t,
+                    options: q.options || undefined,
+                    correctAnswer,
+                    userSelection,
+                    result,
+                    explanation_vi: q.explanation_vi || ''
+                });
+            });
+            return results;
+        }
+
+        function downloadSubmission(data, prefix) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${prefix}-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function viewTestDetail(testId) {
+            const history = JSON.parse(localStorage.getItem('sc900_history') || '[]');
+            const test = history.find(h => h.id === testId);
+            if (!test) { alert('Không tìm thấy bài làm.'); return; }
+
+            const qMap = {};
+            questions.forEach(q => { qMap[q.id] = q; });
+
+            const d = new Date(test.date);
+            const dateStr = d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
+            const sCorrect = Number(test.summary.correct) || 0;
+            const sPartial = Number(test.summary.partial) || 0;
+            const sWrong = Number(test.summary.wrong) || 0;
+            const sTotal = Number(test.summary.total) || 0;
+            const pct = sTotal > 0 ? Math.round(sCorrect / sTotal * 100) : 0;
+
+            document.getElementById('review-modal-title').textContent = `📋 Bài làm ${testId}`;
+
+            let html = `<div class="mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200 text-sm">
+                <div class="flex flex-wrap gap-x-6 gap-y-1">
+                    <span><strong>Người làm:</strong> ${escHtml(test.username || '-')}</span>
+                    <span><strong>Thời gian:</strong> ${escHtml(dateStr)}</span>
+                    <span><strong>Nguồn:</strong> ${escHtml(test.source || 'DUMP')}</span>
+                </div>
+                <div class="flex flex-wrap gap-x-6 gap-y-1 mt-2">
+                    <span class="text-green-600 font-semibold">✅ Đúng: ${sCorrect}</span>
+                    <span class="text-yellow-500 font-semibold">⚠️ Một phần: ${sPartial}</span>
+                    <span class="text-red-500 font-semibold">❌ Sai: ${sWrong}</span>
+                    <span class="font-bold">Tỉ lệ: ${pct}%</span>
+                </div>
+            </div>`;
+
+            (test.questions || []).forEach((q, i) => {
+                const orig = qMap[q.questionId];
+                const borderColor = q.result === 'correct' ? 'border-green-500' : q.result === 'partial' ? 'border-yellow-400' : 'border-red-500';
+                const resultIcon = q.result === 'correct' ? '✅' : q.result === 'partial' ? '⚠️' : '❌';
+
+                let questionText = orig ? escHtml(orig.question) : `Câu hỏi ID ${q.questionId}`;
+                let questionType = orig ? escHtml(orig.type) : '';
+                let correctAnswer = orig ? orig.answer : '';
+                let explanationVi = orig ? escHtml(orig.explanation_vi || '') : '';
+                let options = orig ? (orig.options || []) : [];
+
+                const isTF = questionType === 'True False' || questionType === 'True or False';
+                const isMulti = questionType === 'Multiple Choices' || questionType === 'Multiple Choice';
+
+                // Format correct answer display
+                let correctText = '';
+                if (isTF) { correctText = correctAnswer === true ? 'YES' : 'NO'; }
+                else if (Array.isArray(correctAnswer)) { correctText = escHtml(correctAnswer.join(', ')); }
+                else { correctText = escHtml(String(correctAnswer)); }
+
+                // Format user selection display
+                let selText = '';
+                if (q.selection === null || q.selection === undefined) { selText = '<em class="text-gray-400">(Không trả lời)</em>'; }
+                else if (Array.isArray(q.selection)) { selText = q.selection.length > 0 ? escHtml(q.selection.join(', ')) : '<em class="text-gray-400">(Không chọn)</em>'; }
+                else { selText = escHtml(q.selection); }
+
+                // Build options display
+                let optionsHtml = '';
+                if (isTF) {
+                    ['YES', 'NO'].forEach(val => {
+                        const isCorrectOpt = (correctAnswer === true ? 'YES' : 'NO') === val;
+                        const isSelected = q.selection === val;
+                        let cls = 'px-3 py-1 rounded-lg border text-xs font-medium inline-block mr-2 ';
+                        if (isCorrectOpt && isSelected) cls += 'bg-green-100 text-green-800 border-green-500';
+                        else if (!isCorrectOpt && isSelected) cls += 'bg-red-100 text-red-800 border-red-400';
+                        else if (isCorrectOpt) cls += 'bg-green-50 text-green-600 border-green-300';
+                        else cls += 'bg-white text-gray-400 border-gray-200';
+                        optionsHtml += `<span class="${cls}">${escHtml(val)}</span>`;
+                    });
+                } else if (options.length > 0) {
+                    const correctSet = new Set(Array.isArray(correctAnswer) ? correctAnswer : [correctAnswer]);
+                    const selectedSet = new Set(Array.isArray(q.selection) ? q.selection : (q.selection ? [q.selection] : []));
+                    options.forEach(opt => {
+                        const isCorrectOpt = correctSet.has(opt);
+                        const isSelected = selectedSet.has(opt);
+                        let cls = 'block px-3 py-1.5 rounded-lg border text-xs font-medium mb-1 ';
+                        if (isCorrectOpt && isSelected) cls += 'bg-green-100 text-green-800 border-green-500';
+                        else if (!isCorrectOpt && isSelected) cls += 'bg-red-100 text-red-800 border-red-400';
+                        else if (isCorrectOpt) cls += 'bg-green-50 text-green-600 border-green-300';
+                        else cls += 'bg-white text-gray-400 border-gray-200';
+                        optionsHtml += `<span class="${cls}">${escHtml(opt)}</span>`;
+                    });
+                }
+
+                html += `<div class="border-2 ${borderColor} rounded-xl p-4 mb-3">
+                    <div class="flex items-start justify-between mb-2">
+                        <p class="font-semibold text-gray-800 text-sm"><span class="text-blue-500 uppercase text-xs font-bold mr-2">${questionType}</span>Câu ${i + 1}: ${questionText}</p>
+                        <span class="text-lg ml-2">${resultIcon}</span>
+                    </div>
+                    ${optionsHtml ? `<div class="mb-2">${optionsHtml}</div>` : ''}
+                    <div class="mt-2 pt-2 border-t border-gray-200 text-xs space-y-1">
+                        <p class="text-green-700">📌 Đáp án: <strong>${correctText}</strong></p>
+                        ${explanationVi ? `<p class="text-gray-500">💡 ${explanationVi}</p>` : ''}
+                    </div>
+                </div>`;
+            });
+
+            document.getElementById('review-modal-body').innerHTML = html;
+            document.getElementById('review-modal').style.display = 'flex';
+        }
+
+        async function handleUploadSubmissions(input) {
+            const files = [...input.files];
+            if (files.length === 0) return;
+
+            let imported = 0, skipped = 0;
+            const history = JSON.parse(localStorage.getItem('sc900_history') || '[]');
+
+            for (const file of files) {
+                try {
+                    const text = await file.text();
+                    const data = JSON.parse(text);
+
+                    if (!data.questions || !Array.isArray(data.questions) || !data.summary) {
+                        skipped++;
+                        continue;
+                    }
+
+                    // Convert submission format to history format
+                    const testId = generateTestId();
+                    const questionsData = data.questions.map((q, i) => ({
+                        questionId: typeof q.questionId === 'number' ? q.questionId : (i + 1),
+                        selection: q.userSelection,
+                        result: ['correct','partial','wrong'].includes(q.result) ? q.result : 'wrong'
+                    }));
+
+                    history.push({
+                        id: testId,
+                        date: data.date || new Date().toISOString(),
+                        username: String(data.username || document.getElementById('welcome-message').textContent.replace('Xin chào, ', '') || 'Imported').slice(0, 100),
+                        summary: {
+                            correct: Number(data.summary.correct) || 0,
+                            partial: Number(data.summary.partial) || 0,
+                            wrong: Number(data.summary.wrong) || 0,
+                            total: Number(data.summary.total) || 0
+                        },
+                        questions: questionsData,
+                        source: String(data.mode || 'Imported').slice(0, 20)
+                    });
+                    imported++;
+                } catch (e) {
+                    skipped++;
+                }
+            }
+
+            localStorage.setItem('sc900_history', JSON.stringify(history));
+            input.value = ''; // Reset file input
+            renderHistory();
+            alert(`Đã tải lên thành công ${imported} bài làm.${skipped > 0 ? ` Bỏ qua ${skipped} file không hợp lệ.` : ''}`);
+        }
+
+        // ---- Practice Test ----
+        function startPracticeTest() {
+            const container = document.getElementById('practice-questions');
+            container.innerHTML = '';
+
+            const shuffled = [...questions].sort(() => 0.5 - Math.random());
+            const selected = shuffled.slice(0, Math.min(40, shuffled.length));
+
+            selected.forEach((q, index) => {
+                const box = document.createElement('div');
+                box.className = 'bg-gray-50 border-2 border-gray-200 shadow-sm rounded-xl p-6 mb-4 text-left';
+                box.dataset.type = q.type;
+                box.dataset.answer = JSON.stringify(q.answer);
+                box.dataset.qindex = index;
+                box.dataset.qid = q.id;
+                box.dataset.explanation = q.explanation_vi || '';
+
+                const isMulti = q.type === 'Multiple Choices' || q.type === 'Multiple Choice' || q.type === 'multiple choice';
+                const isTF = q.type === 'True False' || q.type === 'True or False';
+
+                let optionsHTML = '';
+                if (isTF) {
+                    optionsHTML = `<div class="flex space-x-3 mt-3">
+                        <button class="opt-single ${OPT_BASE} ${OPT_DEFAULT}" data-group="q${index}" data-value="YES">YES</button>
+                        <button class="opt-single ${OPT_BASE} ${OPT_DEFAULT}" data-group="q${index}" data-value="NO">NO</button>
+                    </div>`;
+                } else if (q.type === 'Choose the correct answer') {
+                    optionsHTML = `<div class="mt-3 space-y-2">` +
+                        (q.options || []).map(opt =>
+                            `<button class="opt-single ${OPT_BASE} ${OPT_DEFAULT} w-full text-left" data-group="q${index}" data-value="${opt.replace(/"/g, '&quot;')}">${escHtml(opt)}</button>`
+                        ).join('') + `</div>`;
+                } else if (isMulti) {
+                    optionsHTML = `<div class="mt-3 space-y-2">` +
+                        (q.options || []).map(opt =>
+                            `<button class="opt-multi ${OPT_BASE} ${OPT_DEFAULT} w-full text-left" data-group="q${index}" data-value="${opt.replace(/"/g, '&quot;')}" data-selected="false">${escHtml(opt)}</button>`
+                        ).join('') + `</div>`;
+                } else {
+                    optionsHTML = `<textarea name="q${index}" class="border border-gray-300 rounded-lg w-full mt-3 p-3 text-gray-800" placeholder="Nhập câu trả lời..."></textarea>`;
+                }
+
+                box.innerHTML = `
+                    <p class="text-xs font-semibold text-blue-500 uppercase mb-1">${escHtml(q.type)}</p>
+                    <p class="font-semibold text-gray-800 mb-3">Câu ${index + 1}: ${escHtml(q.question)}</p>
+                    ${optionsHTML}
+                `;
+                container.appendChild(box);
+            });
+
+            attachOptionListeners(container, selected.length);
+
+            // Show status box
+            answeredQuestions.clear();
+            updateStatus(selected.length);
+            document.getElementById('status-box').style.display = 'block';
+            document.getElementById('status-result').style.display = 'none';
+
+            if (selected.length > 0) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'flex justify-center gap-4 mt-4 mb-10';
+
+                const finishBtn = document.createElement('button');
+                finishBtn.textContent = 'Hoàn thành';
+                finishBtn.className = 'bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg px-8 py-3';
+
+                const newTestBtn = document.createElement('button');
+                newTestBtn.textContent = 'Làm bài thi mới';
+                newTestBtn.className = 'bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg px-8 py-3';
+                newTestBtn.addEventListener('click', () => startPracticeTest());
+
+                wrapper.appendChild(finishBtn);
+                wrapper.appendChild(newTestBtn);
+                container.appendChild(wrapper);
+
+                finishBtn.addEventListener('click', () => {
+                    // Disable all option buttons
+                    container.querySelectorAll('.opt-single, .opt-multi').forEach(b => b.style.pointerEvents = 'none');
+                    finishBtn.disabled = true;
+                    finishBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                    let nCorrect = 0, nPartial = 0, nWrong = 0;
+
+                    container.querySelectorAll('[data-qindex]').forEach(box => {
+                        const type = box.dataset.type;
+                        const correctAnswer = JSON.parse(box.dataset.answer);
+                        const qindex = box.dataset.qindex;
+                        const isMulti = type === 'Multiple Choices' || type === 'Multiple Choice' || type === 'multiple choice';
+                        const isTF = type === 'True False' || type === 'True or False';
+
+                        if (isMulti) {
+                            const correctSet = new Set(Array.isArray(correctAnswer) ? correctAnswer : [correctAnswer]);
+                            const selectedBtns = [...box.querySelectorAll('.opt-multi')];
+                            const selectedVals = selectedBtns.filter(b => b.dataset.selected === 'true').map(b => b.dataset.value);
+                            const selectedSet = new Set(selectedVals);
+
+                            // Color each option
+                            selectedBtns.forEach(b => {
+                                const val = b.dataset.value;
+                                const isCorrectOpt = correctSet.has(val);
+                                const isSelectedOpt = selectedSet.has(val);
+                                b.classList.remove('bg-blue-500', 'bg-white', 'text-white', 'text-gray-800', 'border-blue-500', 'border-gray-300');
+                                if (isCorrectOpt && isSelectedOpt) {
+                                    b.classList.add('bg-green-100', 'text-green-800', 'border-green-500');
+                                } else if (!isCorrectOpt && isSelectedOpt) {
+                                    b.classList.add('bg-red-100', 'text-red-800', 'border-red-400');
+                                } else {
+                                    b.classList.add('bg-white', 'text-gray-500', 'border-gray-200');
+                                }
+                            });
+
+                            const fullyCorrect = [...correctSet].every(v => selectedSet.has(v)) && selectedSet.size === correctSet.size;
+                            const anyCorrect = [...selectedSet].some(v => correctSet.has(v));
+
+                            if (fullyCorrect) {
+                                box.classList.remove('border-gray-200'); box.classList.add('border-green-500');
+                                nCorrect++;
+                            } else if (anyCorrect) {
+                                box.classList.remove('border-gray-200'); box.classList.add('border-yellow-400');
+                                nPartial++;
+                            } else {
+                                box.classList.remove('border-gray-200'); box.classList.add('border-red-500');
+                                nWrong++;
+                            }
+
+                        } else if (isTF) {
+                            const selectedBtn = box.querySelector('.opt-single[data-selected="true"]');
+                            const selectedVal = selectedBtn ? selectedBtn.dataset.value : null;
+                            const correctVal = correctAnswer === true ? 'YES' : 'NO';
+                            if (selectedVal === correctVal) {
+                                box.classList.remove('border-gray-200'); box.classList.add('border-green-500');
+                                nCorrect++;
+                            } else {
+                                box.classList.remove('border-gray-200'); box.classList.add('border-red-500');
+                                nWrong++;
+                            }
+
+                        } else if (type === 'Choose the correct answer') {
+                            const selectedBtn = box.querySelector('.opt-single[data-selected="true"]');
+                            const selectedVal = selectedBtn ? selectedBtn.dataset.value : null;
+                            if (selectedVal === correctAnswer) {
+                                box.classList.remove('border-gray-200'); box.classList.add('border-green-500');
+                                nCorrect++;
+                            } else {
+                                box.classList.remove('border-gray-200'); box.classList.add('border-red-500');
+                                nWrong++;
+                            }
+                        } else {
+                            // Answer the question type — skip grading
+                        }
+
+                        // Display correct answer and explanation
+                        const answerDiv = document.createElement('div');
+                        answerDiv.className = 'mt-4 pt-3 border-t border-gray-300';
+
+                        let answerText = '';
+                        if (isTF) {
+                            answerText = correctAnswer === true ? 'YES' : 'NO';
+                        } else if (Array.isArray(correctAnswer)) {
+                            answerText = correctAnswer.join(', ');
+                        } else {
+                            answerText = String(correctAnswer);
+                        }
+
+                        let html = `<p class="text-sm font-semibold text-green-700">📌 Đáp án: <span class="font-bold">${escHtml(answerText)}</span></p>`;
+
+                        const explanation = box.dataset.explanation;
+                        if (explanation && explanation.trim() !== '') {
+                            html += `<p class="text-sm text-gray-600 mt-1">💡 Giải thích: ${escHtml(explanation)}</p>`;
+                        }
+
+                        answerDiv.innerHTML = html;
+                        box.appendChild(answerDiv);
+                    });
+
+                    // Save test results to localStorage
+                    const testId = generateTestId();
+                    const testResults = [];
+                    container.querySelectorAll('[data-qindex]').forEach(box => {
+                        const t = box.dataset.type;
+                        const qid = Number(box.dataset.qid);
+                        const isM = t === 'Multiple Choices' || t === 'Multiple Choice' || t === 'multiple choice';
+                        const isTf = t === 'True False' || t === 'True or False';
+                        let userSelection = null;
+                        let result = 'wrong';
+
+                        if (isM) {
+                            userSelection = [...box.querySelectorAll('.opt-multi')]
+                                .filter(b => b.dataset.selected === 'true').map(b => b.dataset.value);
+                        } else if (isTf || t === 'Choose the correct answer') {
+                            const sel = box.querySelector('.opt-single[data-selected="true"]');
+                            userSelection = sel ? sel.dataset.value : null;
+                        } else {
+                            const ta = box.querySelector('textarea');
+                            userSelection = ta ? ta.value : null;
+                        }
+
+                        if (box.classList.contains('border-green-500')) result = 'correct';
+                        else if (box.classList.contains('border-yellow-400')) result = 'partial';
+                        else result = 'wrong';
+
+                        testResults.push({ questionId: qid, selection: userSelection, result });
+                    });
+
+                    const history = JSON.parse(localStorage.getItem('sc900_history') || '[]');
+                    history.push({
+                        id: testId,
+                        date: new Date().toISOString(),
+                        username: document.getElementById('welcome-message').textContent.replace('Xin chào, ', ''),
+                        summary: { correct: nCorrect, partial: nPartial, wrong: nWrong, total: selected.length },
+                        questions: testResults
+                    });
+                    localStorage.setItem('sc900_history', JSON.stringify(history));
+
+                    // Update status box with results
+                    document.getElementById('status-result').style.display = 'block';
+                    document.getElementById('res-correct').textContent = nCorrect;
+                    document.getElementById('res-partial').textContent = nPartial;
+                    document.getElementById('res-wrong').textContent = nWrong;
+
+                    // Add download submission button
+                    const dlBtn = document.createElement('button');
+                    dlBtn.textContent = '⬇ Tải xuống bài làm';
+                    dlBtn.className = 'bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-8 py-3';
+                    dlBtn.addEventListener('click', () => {
+                        const submission = collectSubmission(container, selected);
+                        downloadSubmission({ mode: 'DUMP', date: new Date().toISOString(), summary: { correct: nCorrect, partial: nPartial, wrong: nWrong, total: selected.length }, questions: submission }, 'sc900-dump-bailam');
+                    });
+                    wrapper.appendChild(dlBtn);
+
+                    newTestBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+            }
+
+            document.getElementById('practice-start-wrapper').style.display = 'none';
+        }
+
+        document.getElementById('start-practice').addEventListener('click', () => startPracticeTest());
+
+        // ---- Analyze Modal ----
+        let geminiKeyValid = false;
+        let _memGeminiKey = ''; // In-memory only, not in localStorage
+        localStorage.removeItem('sc900_gemini_key'); // Clean up legacy key from older versions
+
+        function getGeminiKey() { return _memGeminiKey; }
+        function setGeminiKey(key) {
+            _memGeminiKey = key;
+            // Sync both input fields
+            document.getElementById('gemini-api-key').value = key;
+            document.getElementById('ai-gemini-key').value = key;
+        }
+
+        function openAnalyzeModal() {
+            const history = JSON.parse(localStorage.getItem('sc900_history') || '[]');
+            if (history.length === 0) {
+                alert('Chưa có lịch sử làm bài để phân tích.');
+                return;
+            }
+            // Restore saved key if any
+            document.getElementById('gemini-api-key').value = getGeminiKey();
+            document.getElementById('key-status').innerHTML = '';
+            document.getElementById('analyze-result').classList.add('hidden');
+            document.getElementById('analyze-modal').style.display = 'flex';
+            geminiKeyValid = false;
+        }
+
+        function closeAnalyzeModal() {
+            document.getElementById('analyze-modal').style.display = 'none';
+        }
+
+        async function checkGeminiKey() {
+            const apiKey = document.getElementById('gemini-api-key').value.trim();
+            const statusEl = document.getElementById('key-status');
+            if (!apiKey) {
+                statusEl.innerHTML = '<span class="text-red-500">⚠️ Vui lòng nhập API Key.</span>';
+                geminiKeyValid = false;
+                return;
+            }
+            statusEl.innerHTML = '<span class="text-gray-500">⏳ Đang kiểm tra...</span>';
+            document.getElementById('btn-check-key').disabled = true;
+
+            try {
+                // Use the list models endpoint to verify key
+                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const modelNames = (data.models || []).filter(m => m.name.includes('gemini')).map(m => m.displayName || m.name).slice(0, 5);
+                    setGeminiKey(apiKey);
+                    geminiKeyValid = true;
+                    statusEl.innerHTML = `<span class="text-green-600 font-semibold">✅ API Key hợp lệ!</span>
+                        <span class="text-gray-500 text-xs ml-1">Có thể sử dụng ${(data.models || []).length} models (VD: ${escHtml(modelNames.join(', '))})</span>`;
+                } else {
+                    const errData = await resp.json().catch(() => ({}));
+                    const msg = errData?.error?.message || `HTTP ${resp.status}`;
+                    geminiKeyValid = false;
+                    statusEl.innerHTML = `<span class="text-red-500 font-semibold">❌ API Key không hợp lệ.</span> <span class="text-gray-400 text-xs">${escHtml(msg)}</span>`;
+                }
+            } catch (e) {
+                geminiKeyValid = false;
+                statusEl.innerHTML = `<span class="text-red-500">❌ Lỗi kết nối: ${escHtml(e.message)}</span>`;
+            } finally {
+                document.getElementById('btn-check-key').disabled = false;
+            }
+        }
+
+        async function runGeminiAnalysis() {
+            const apiKey = document.getElementById('gemini-api-key').value.trim();
+            const statusEl = document.getElementById('key-status');
+            const resultEl = document.getElementById('analyze-result');
+            const contentEl = document.getElementById('analyze-content');
+            const btn = document.getElementById('btn-run-analyze');
+
+            if (!apiKey) {
+                statusEl.innerHTML = '<span class="text-red-500">⚠️ Vui lòng nhập API Key trước.</span>';
+                return;
+            }
+
+            // If key not verified yet, verify first
+            if (!geminiKeyValid) {
+                await checkGeminiKey();
+                if (!geminiKeyValid) return;
+            }
+
+            const history = JSON.parse(localStorage.getItem('sc900_history') || '[]');
+            if (history.length === 0) {
+                alert('Chưa có dữ liệu làm bài.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Đang phân tích...';
+            resultEl.classList.add('hidden');
+
+            // Build summary data for Gemini
+            const wrongQuestionIds = new Set();
+            const partialQuestionIds = new Set();
+            history.forEach(test => {
+                (test.questions || []).forEach(q => {
+                    if (q.result === 'wrong') wrongQuestionIds.add(q.questionId);
+                    else if (q.result === 'partial') partialQuestionIds.add(q.questionId);
+                });
+            });
+
+            // Map question id to question text
+            const qMap = {};
+            questions.forEach(q => { qMap[q.id] = q.question; });
+
+            const wrongList = [...wrongQuestionIds].map(id => `- [ID ${id}] ${qMap[id] || 'N/A'}`).join('\n');
+            const partialList = [...partialQuestionIds].map(id => `- [ID ${id}] ${qMap[id] || 'N/A'}`).join('\n');
+
+            const totalTests = history.length;
+            const totalCorrect = history.reduce((s, t) => s + t.summary.correct, 0);
+            const totalPartial = history.reduce((s, t) => s + t.summary.partial, 0);
+            const totalWrong = history.reduce((s, t) => s + t.summary.wrong, 0);
+            const totalQs = history.reduce((s, t) => s + t.summary.total, 0);
+
+            const prompt = `Bạn là chuyên gia về chứng chỉ Microsoft SC-900 (Security, Compliance, and Identity Fundamentals). Hãy phân tích kết quả ôn tập của người dùng và đưa ra khuyến nghị chi tiết bằng tiếng Việt.
+
+TỔNG QUAN:
+- Số bài thi đã làm: ${totalTests}
+- Tổng số câu hỏi đã trả lời: ${totalQs}
+- Đúng: ${totalCorrect} | Đúng một phần: ${totalPartial} | Sai: ${totalWrong}
+- Tỉ lệ đúng: ${totalQs > 0 ? Math.round(totalCorrect / totalQs * 100) : 0}%
+
+CÁC CÂU TRẢ LỜI SAI:
+${wrongList || '(Không có)'}
+
+CÁC CÂU TRẢ LỜI ĐÚNG MỘT PHẦN:
+${partialList || '(Không có)'}
+
+Dựa trên các câu hỏi bị sai/đúng một phần ở trên, hãy:
+1. Phân loại các câu sai theo từng chủ đề/lĩnh vực kiến thức SC-900/Công cụ Azure (ví dụ: Identity & Access Management, Security Solutions, Compliance, v.v.)
+2. Xác định những phần kiến thức nào người dùng đang yếu nhất
+3. Đưa ra khuyến nghị cụ thể để cải thiện (nên ôn lại phần nào, tài liệu nào)
+4. Đánh giá mức độ sẵn sàng thi SC-900
+
+Trả lời ngắn gọn, rõ ràng, có cấu trúc.`;
+
+            try {
+                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
+                    })
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err?.error?.message || `HTTP ${resp.status}`);
+                }
+
+                const data = await resp.json();
+                const parts = data?.candidates?.[0]?.content?.parts || [];
+                const text = parts.map(p => p.text || '').join('') || 'Không nhận được phản hồi từ Gemini.';
+
+                // Simple markdown-like rendering (escape HTML first to prevent XSS)
+                const rendered = escHtml(text)
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                    .replace(/^### (.+)$/gm, '<h4 class="font-bold text-purple-700 mt-3 mb-1">$1</h4>')
+                    .replace(/^## (.+)$/gm, '<h3 class="font-bold text-purple-800 text-base mt-4 mb-1">$1</h3>')
+                    .replace(/^- (.+)$/gm, '<li class="ml-4">$1</li>')
+                    .replace(/\n/g, '<br>');
+
+                contentEl.innerHTML = rendered;
+                resultEl.classList.remove('hidden');
+            } catch (e) {
+                contentEl.innerHTML = `<span class="text-red-500">❌ Lỗi: ${escHtml(e.message)}</span>`;
+                resultEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 Phân tích';
+            }
+        }
+        // ---- AI Practice ----
+        const aiAnsweredQuestions = new Set();
+
+        function updateAIStatus(total) {
+            const count = aiAnsweredQuestions.size;
+            document.getElementById('ai-status-answered').textContent = count;
+            document.getElementById('ai-status-total').textContent = total;
+            document.getElementById('ai-status-bar').style.width = (count / total * 100) + '%';
+        }
+
+        function attachAIOptionListeners(container, total) {
+            container.querySelectorAll('.opt-single').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const group = btn.dataset.group;
+                    container.querySelectorAll(`.opt-single[data-group="${group}"]`).forEach(b => {
+                        b.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
+                        b.classList.add('bg-white', 'text-gray-800', 'border-gray-300');
+                    });
+                    btn.classList.remove('bg-white', 'text-gray-800', 'border-gray-300');
+                    btn.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+                    btn.dataset.selected = 'true';
+                    aiAnsweredQuestions.add(group);
+                    updateAIStatus(total);
+                });
+            });
+            container.querySelectorAll('.opt-multi').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const group = btn.dataset.group;
+                    if (btn.dataset.selected === 'true') {
+                        btn.dataset.selected = 'false';
+                        btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
+                        btn.classList.add('bg-white', 'text-gray-800', 'border-gray-300');
+                    } else {
+                        btn.dataset.selected = 'true';
+                        btn.classList.remove('bg-white', 'text-gray-800', 'border-gray-300');
+                        btn.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+                    }
+                    const anySelected = [...container.querySelectorAll(`.opt-multi[data-group="${group}"]`)]
+                        .some(b => b.dataset.selected === 'true');
+                    if (anySelected) aiAnsweredQuestions.add(group);
+                    else aiAnsweredQuestions.delete(group);
+                    updateAIStatus(total);
+                });
+            });
+        }
+
+        async function generateAIQuestions() {
+            const apiKey = document.getElementById('ai-gemini-key').value.trim();
+            const statusEl = document.getElementById('ai-gen-status');
+            const btn = document.getElementById('btn-generate-ai');
+
+            if (!apiKey) {
+                statusEl.innerHTML = '<span class="text-red-500">⚠️ Vui lòng nhập Gemini API Key.</span>';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Đang tạo câu hỏi...';
+            statusEl.innerHTML = '<span class="text-gray-500">⏳ Gemini đang tạo 40 câu hỏi SC-900, vui lòng đợi...</span>';
+
+            // Save key in memory for reuse
+            setGeminiKey(apiKey);
+
+            const prompt = `Hãy tạo ngẫu nhiên 40 câu hỏi ôn tập cho chứng chỉ Microsoft SC-900 (Security, Compliance, and Identity Fundamentals). 
+
+YÊU CẦU:
+- Câu hỏi bằng tiếng Anh, bao phủ đều các chủ đề: Identity & Access Management, Security Solutions, Compliance Solutions
+- Trộn đều 3 loại câu hỏi:
+  + "True False": câu hỏi đúng/sai, answer là true hoặc false
+  + "Choose the correct answer": câu hỏi chọn 1 đáp án đúng từ 4 options, answer là string khớp đúng 1 option
+  + "Multiple Choices": câu hỏi chọn nhiều đáp án đúng từ 4-5 options, answer là mảng string các đáp án đúng
+- Mỗi câu có explanation_vi (giải thích ngắn bằng tiếng Việt)
+
+TRẢ VỀ ĐÚNG JSON ARRAY, không có text nào khác, không có markdown code block. Format:
+[
+  {"id":1,"type":"True False","question":"...","answer":true,"explanation_vi":"..."},
+  {"id":2,"type":"Choose the correct answer","question":"...","options":["A","B","C","D"],"answer":"B","explanation_vi":"..."},
+  {"id":3,"type":"Multiple Choices","question":"...","options":["A","B","C","D"],"answer":["A","C"],"explanation_vi":"..."}
+]
+
+Tạo đúng 40 câu. Chỉ trả về JSON array, không thêm bất kỳ text nào khác.`;
+
+            try {
+                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { temperature: 1.0, maxOutputTokens: 16384 }
+                    })
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err?.error?.message || `HTTP ${resp.status}`);
+                }
+
+                const data = await resp.json();
+                const parts = data?.candidates?.[0]?.content?.parts || [];
+                let rawText = parts.map(p => p.text || '').join('');
+
+                // Strip markdown code fences if present
+                rawText = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+
+                const aiQuestions = JSON.parse(rawText);
+
+                if (!Array.isArray(aiQuestions) || aiQuestions.length === 0) {
+                    throw new Error('Gemini không trả về danh sách câu hỏi hợp lệ.');
+                }
+
+                renderAIPractice(aiQuestions);
+
+            } catch (e) {
+                statusEl.innerHTML = `<span class="text-red-500">❌ Lỗi: ${escHtml(e.message)}</span>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 Tạo bộ đề & Bắt đầu';
+            }
+        }
+
+        function renderAIPractice(aiQuestions) {
+            document.getElementById('ai-start-wrapper').style.display = 'none';
+            const container = document.getElementById('ai-questions');
+            container.innerHTML = '';
+            aiAnsweredQuestions.clear();
+
+            aiQuestions.forEach((q, index) => {
+                const box = document.createElement('div');
+                box.className = 'bg-gray-50 border-2 border-gray-200 shadow-sm rounded-xl p-6 mb-4 text-left';
+                box.dataset.type = q.type;
+                box.dataset.answer = JSON.stringify(q.answer);
+                box.dataset.qindex = index;
+                box.dataset.explanation = q.explanation_vi || '';
+
+                const isMulti = q.type === 'Multiple Choices' || q.type === 'Multiple Choice' || q.type === 'multiple choice';
+                const isTF = q.type === 'True False' || q.type === 'True or False';
+
+                let optionsHTML = '';
+                if (isTF) {
+                    optionsHTML = `<div class="flex space-x-3 mt-3">
+                        <button class="opt-single ${OPT_BASE} ${OPT_DEFAULT}" data-group="ai${index}" data-value="YES">YES</button>
+                        <button class="opt-single ${OPT_BASE} ${OPT_DEFAULT}" data-group="ai${index}" data-value="NO">NO</button>
+                    </div>`;
+                } else if (q.type === 'Choose the correct answer') {
+                    optionsHTML = `<div class="mt-3 space-y-2">` +
+                        (q.options || []).map(opt =>
+                            `<button class="opt-single ${OPT_BASE} ${OPT_DEFAULT} w-full text-left" data-group="ai${index}" data-value="${opt.replace(/"/g, '&quot;')}">${escHtml(opt)}</button>`
+                        ).join('') + `</div>`;
+                } else if (isMulti) {
+                    optionsHTML = `<div class="mt-3 space-y-2">` +
+                        (q.options || []).map(opt =>
+                            `<button class="opt-multi ${OPT_BASE} ${OPT_DEFAULT} w-full text-left" data-group="ai${index}" data-value="${opt.replace(/"/g, '&quot;')}" data-selected="false">${escHtml(opt)}</button>`
+                        ).join('') + `</div>`;
+                }
+
+                box.innerHTML = `
+                    <p class="text-xs font-semibold text-blue-500 uppercase mb-1">${escHtml(q.type)}</p>
+                    <p class="font-semibold text-gray-800 mb-3">Câu ${index + 1}: ${escHtml(q.question)}</p>
+                    ${optionsHTML}
+                `;
+                container.appendChild(box);
+            });
+
+            attachAIOptionListeners(container, aiQuestions.length);
+
+            // Show AI status box, hide DUMP status box
+            document.getElementById('status-box').style.display = 'none';
+            updateAIStatus(aiQuestions.length);
+            document.getElementById('ai-status-box').style.display = 'block';
+            document.getElementById('ai-status-result').style.display = 'none';
+
+            // Buttons
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex justify-center gap-4 mt-4 mb-10';
+
+            const finishBtn = document.createElement('button');
+            finishBtn.textContent = 'Hoàn thành';
+            finishBtn.className = 'bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg px-8 py-3';
+
+            const newTestBtn = document.createElement('button');
+            newTestBtn.textContent = 'Tạo bộ đề mới';
+            newTestBtn.className = 'bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg px-8 py-3';
+            newTestBtn.addEventListener('click', () => {
+                document.getElementById('ai-questions').innerHTML = '';
+                document.getElementById('ai-status-box').style.display = 'none';
+                document.getElementById('ai-start-wrapper').style.display = 'flex';
+            });
+
+            const downloadBtn = document.createElement('button');
+            downloadBtn.textContent = '⬇ Tải bộ đề';
+            downloadBtn.className = 'bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-8 py-3';
+            downloadBtn.addEventListener('click', () => {
+                const blob = new Blob([JSON.stringify(aiQuestions, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sc900-ai-${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            wrapper.appendChild(finishBtn);
+            wrapper.appendChild(newTestBtn);
+            wrapper.appendChild(downloadBtn);
+            container.appendChild(wrapper);
+
+            finishBtn.addEventListener('click', () => {
+                container.querySelectorAll('.opt-single, .opt-multi').forEach(b => b.style.pointerEvents = 'none');
+                finishBtn.disabled = true;
+                finishBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                let nCorrect = 0, nPartial = 0, nWrong = 0;
+
+                container.querySelectorAll('[data-qindex]').forEach(box => {
+                    const type = box.dataset.type;
+                    const correctAnswer = JSON.parse(box.dataset.answer);
+                    const isMulti = type === 'Multiple Choices' || type === 'Multiple Choice' || type === 'multiple choice';
+                    const isTF = type === 'True False' || type === 'True or False';
+
+                    if (isMulti) {
+                        const correctSet = new Set(Array.isArray(correctAnswer) ? correctAnswer : [correctAnswer]);
+                        const selectedBtns = [...box.querySelectorAll('.opt-multi')];
+                        const selectedVals = selectedBtns.filter(b => b.dataset.selected === 'true').map(b => b.dataset.value);
+                        const selectedSet = new Set(selectedVals);
+
+                        selectedBtns.forEach(b => {
+                            const val = b.dataset.value;
+                            const isCorrectOpt = correctSet.has(val);
+                            const isSelectedOpt = selectedSet.has(val);
+                            b.classList.remove('bg-blue-500', 'bg-white', 'text-white', 'text-gray-800', 'border-blue-500', 'border-gray-300');
+                            if (isCorrectOpt && isSelectedOpt) {
+                                b.classList.add('bg-green-100', 'text-green-800', 'border-green-500');
+                            } else if (!isCorrectOpt && isSelectedOpt) {
+                                b.classList.add('bg-red-100', 'text-red-800', 'border-red-400');
+                            } else {
+                                b.classList.add('bg-white', 'text-gray-500', 'border-gray-200');
+                            }
+                        });
+
+                        const fullyCorrect = [...correctSet].every(v => selectedSet.has(v)) && selectedSet.size === correctSet.size;
+                        const anyCorrect = [...selectedSet].some(v => correctSet.has(v));
+
+                        if (fullyCorrect) { box.classList.remove('border-gray-200'); box.classList.add('border-green-500'); nCorrect++; }
+                        else if (anyCorrect) { box.classList.remove('border-gray-200'); box.classList.add('border-yellow-400'); nPartial++; }
+                        else { box.classList.remove('border-gray-200'); box.classList.add('border-red-500'); nWrong++; }
+
+                    } else if (isTF) {
+                        const selectedBtn = box.querySelector('.opt-single[data-selected="true"]');
+                        const selectedVal = selectedBtn ? selectedBtn.dataset.value : null;
+                        const correctVal = correctAnswer === true ? 'YES' : 'NO';
+                        if (selectedVal === correctVal) { box.classList.remove('border-gray-200'); box.classList.add('border-green-500'); nCorrect++; }
+                        else { box.classList.remove('border-gray-200'); box.classList.add('border-red-500'); nWrong++; }
+
+                    } else if (type === 'Choose the correct answer') {
+                        const selectedBtn = box.querySelector('.opt-single[data-selected="true"]');
+                        const selectedVal = selectedBtn ? selectedBtn.dataset.value : null;
+                        if (selectedVal === correctAnswer) { box.classList.remove('border-gray-200'); box.classList.add('border-green-500'); nCorrect++; }
+                        else { box.classList.remove('border-gray-200'); box.classList.add('border-red-500'); nWrong++; }
+                    }
+
+                    // Display correct answer and explanation
+                    const answerDiv = document.createElement('div');
+                    answerDiv.className = 'mt-4 pt-3 border-t border-gray-300';
+                    let answerText = '';
+                    if (isTF) { answerText = correctAnswer === true ? 'YES' : 'NO'; }
+                    else if (Array.isArray(correctAnswer)) { answerText = correctAnswer.join(', '); }
+                    else { answerText = String(correctAnswer); }
+
+                    let html = `<p class="text-sm font-semibold text-green-700">📌 Đáp án: <span class="font-bold">${escHtml(answerText)}</span></p>`;
+                    const explanation = box.dataset.explanation;
+                    if (explanation && explanation.trim() !== '') {
+                        html += `<p class="text-sm text-gray-600 mt-1">💡 Giải thích: ${escHtml(explanation)}</p>`;
+                    }
+                    answerDiv.innerHTML = html;
+                    box.appendChild(answerDiv);
+                });
+
+                // Update AI status box (no localStorage save)
+                document.getElementById('ai-status-result').style.display = 'block';
+                document.getElementById('ai-res-correct').textContent = nCorrect;
+                document.getElementById('ai-res-partial').textContent = nPartial;
+                document.getElementById('ai-res-wrong').textContent = nWrong;
+
+                // Add download submission button
+                const dlBtn = document.createElement('button');
+                dlBtn.textContent = '⬇ Tải xuống bài làm';
+                dlBtn.className = 'bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-8 py-3';
+                dlBtn.addEventListener('click', () => {
+                    const submission = collectSubmission(container, aiQuestions);
+                    downloadSubmission({ mode: 'AI', date: new Date().toISOString(), summary: { correct: nCorrect, partial: nPartial, wrong: nWrong, total: aiQuestions.length }, questions: submission }, 'sc900-ai-bailam');
+                });
+                wrapper.appendChild(dlBtn);
+
+                newTestBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+
+            container.firstElementChild?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Restore saved API key for AI tab
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedKey = getGeminiKey();
+            if (savedKey) document.getElementById('ai-gemini-key').value = savedKey;
+        });
+    </script>
+</body>
+</html>
