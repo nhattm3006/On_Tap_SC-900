@@ -193,12 +193,9 @@
             <!-- Mastery Footer / Pagination -->
             <div class="px-4 md:px-8 pb-10 max-w-3xl mx-auto">
                 <div class="flex items-center justify-between bg-gray-50 p-3 md:p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <button id="btn-mastery-prev" onclick="changeMasteryPage(-1)" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 md:px-5 py-2.5 rounded-lg font-bold disabled:opacity-50 transition-colors">⬅ <span class="hidden md:inline">Trang trước</span></button>
-                    <span id="mastery-page-info" class="font-bold text-gray-700 bg-white px-3 md:px-4 py-1 rounded-full shadow-inner border border-gray-200 text-sm md:text-base">Trang 1 / 1</span>
-                    <button id="btn-mastery-next" onclick="changeMasteryPage(1)" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 md:px-5 py-2.5 rounded-lg font-bold disabled:opacity-50 transition-colors"><span class="hidden md:inline">Trang sau</span> ➡</button>
-                </div>
-                <div class="flex justify-center mt-6">
-                    <button id="btn-mastery-grade" onclick="gradeMasteryPage()" class="bg-green-500 hover:bg-green-600 text-white w-full md:w-auto px-6 md:px-10 py-4 rounded-xl font-bold text-base md:text-lg shadow-xl outline-none focus:ring-4 focus:ring-green-300 transition-all">✅ Chấm điểm & Lưu trang này</button>
+                    <button id="btn-mastery-prev" onclick="changeMasteryPage(-1)" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 md:px-5 py-2.5 rounded-lg font-bold disabled:opacity-50 transition-colors">⬅ <span class="hidden md:inline">Câu trước</span></button>
+                    <span id="mastery-page-info" class="font-bold text-gray-700 bg-white px-3 md:px-4 py-1 rounded-full shadow-inner border border-gray-200 text-sm md:text-base">Câu 1 / 1</span>
+                    <button id="btn-mastery-next" onclick="changeMasteryPage(1)" class="bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 md:px-5 py-2.5 rounded-lg font-bold disabled:opacity-50 transition-colors"><span class="hidden md:inline">Câu sau</span> ➡</button>
                 </div>
             </div>
         </div>
@@ -1388,7 +1385,7 @@ Tạo đúng 40 câu. Chỉ trả về JSON array, không thêm bất kỳ text 
         }
 
         // ---- Mastery (Full Dump) Logic ----
-        const MASTERY_ITEMS_PER_PAGE = 20;
+        const MASTERY_ITEMS_PER_PAGE = 1;
 
         function getMasteryState() {
             const raw = localStorage.getItem('sc900_mastery_state');
@@ -1454,7 +1451,7 @@ Tạo đúng 40 câu. Chỉ trả về JSON array, không thêm bất kỳ text 
             const qOrder = state.questionOrder || questions.map(q => q.id);
 
             const totalPages = Math.ceil(qOrder.length / MASTERY_ITEMS_PER_PAGE);
-            document.getElementById('mastery-page-info').textContent = `Trang ${page} / ${totalPages}`;
+            document.getElementById('mastery-page-info').textContent = `Câu ${page} / ${totalPages}`;
             document.getElementById('btn-mastery-prev').disabled = page <= 1;
             document.getElementById('btn-mastery-next').disabled = page >= totalPages;
 
@@ -1503,10 +1500,16 @@ Tạo đúng 40 câu. Chỉ trả về JSON array, không thêm bất kỳ text 
                     optionsHTML = `<textarea name="m${index}" class="border border-gray-300 rounded-lg w-full mt-3 p-3 text-gray-800" placeholder="Nhập câu trả lời..."></textarea>`;
                 }
 
+                let confirmBtnHTML = '';
+                if (!savedAns || !savedAns.result) {
+                    confirmBtnHTML = `<div class="mt-5 text-right"><button onclick="gradeSingleMasteryQuestion(${q.id}, this)" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition-colors w-full md:w-auto">Xác nhận & Chấm điểm</button></div>`;
+                }
+
                 box.innerHTML = `
                     <p class="text-xs font-semibold text-blue-500 uppercase mb-1">${escHtml(q.type)}</p>
                     <p class="font-semibold text-gray-800 mb-3"><span class="bg-gray-200 text-gray-600 px-2 py-0.5 rounded text-xs mr-2 font-mono">ID: ${q.id}</span>Câu ${index + 1}: ${escHtml(q.question)}</p>
                     ${optionsHTML}
+                    ${confirmBtnHTML}
                 `;
                 container.appendChild(box);
             });
@@ -1519,6 +1522,10 @@ Tạo đúng 40 câu. Chỉ trả về JSON array, không thêm bất kỳ text 
                      btn.classList.replace('border-gray-300', 'border-blue-500');
                 }
                 btn.addEventListener('click', () => {
+                    // Ngăn chặn đổi đáp án nếu form đã hiện hộp đáp án
+                    const isGraded = btn.closest('[data-qid]').querySelector('.mastery-ans') !== null;
+                    if (isGraded) return;
+                    
                     const group = btn.dataset.group;
                     container.querySelectorAll(`.opt-single[data-group="${group}"]`).forEach(b => {
                         b.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
@@ -1538,6 +1545,10 @@ Tạo đúng 40 câu. Chỉ trả về JSON array, không thêm bất kỳ text 
                      btn.classList.replace('border-gray-300', 'border-blue-500');
                 }
                 btn.addEventListener('click', () => {
+                    // Ngăn đổi đáp án
+                    const isGraded = btn.closest('[data-qid]').querySelector('.mastery-ans') !== null;
+                    if (isGraded) return;
+
                     if (btn.dataset.selected === 'true') {
                         btn.dataset.selected = 'false';
                         btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
@@ -1606,61 +1617,69 @@ Tạo đúng 40 câu. Chỉ trả về JSON array, không thêm bất kỳ text 
             box.appendChild(answerDiv);
         }
 
-        function gradeMasteryPage() {
-            const container = document.getElementById('mastery-questions');
-            let state = getMasteryState();
-            
-            container.querySelectorAll('[data-qindex]').forEach(box => {
-                const type = box.dataset.type;
-                const correctAnswer = JSON.parse(box.dataset.answer);
-                const qid = parseInt(box.dataset.qid, 10);
-                const isMulti = type === 'Multiple Choices' || type === 'Multiple Choice' || type === 'multiple choice';
-                const isTF = type === 'True False' || type === 'True or False';
+        window.gradeSingleMasteryQuestion = function(qid, btn) {
+            const box = btn.closest('[data-qid]');
+            if (!box) return;
 
-                let userSelection = null;
-                let result = 'wrong';
+            const type = box.dataset.type;
+            const correctAnswer = JSON.parse(box.dataset.answer);
+            const isMulti = type === 'Multiple Choices' || type === 'Multiple Choice' || type === 'multiple choice';
+            const isTF = type === 'True False' || type === 'True or False';
 
-                if (isMulti) {
-                    const selectedBtns = [...box.querySelectorAll('.opt-multi')];
-                    const selectedVals = selectedBtns.filter(b => b.dataset.selected === 'true').map(b => b.dataset.value);
-                    
-                    userSelection = selectedVals;
-                    if (selectedVals.length > 0) {
-                        const correctSet = new Set(Array.isArray(correctAnswer) ? correctAnswer : [correctAnswer]);
-                        const selectedSet = new Set(selectedVals);
-                        const fullyCorrect = [...correctSet].every(v => selectedSet.has(v)) && selectedSet.size === correctSet.size;
-                        const anyCorrect = [...selectedSet].some(v => correctSet.has(v));
-                        
-                        if (fullyCorrect) result = 'correct';
-                        else if (anyCorrect) result = 'partial';
-                        else result = 'wrong';
-                    } else {
-                        result = 'wrong';
-                    }
-                } else if (isTF || type === 'Choose the correct answer') {
-                    const selectedBtn = box.querySelector('.opt-single[data-selected="true"]');
-                    if (selectedBtn) {
-                        userSelection = selectedBtn.dataset.value;
-                        const correctVal = isTF ? (correctAnswer === true ? 'YES' : 'NO') : correctAnswer;
-                        if (userSelection === correctVal) result = 'correct';
-                        else result = 'wrong';
-                    } else {
-                        userSelection = null;
-                        result = 'wrong';
-                    }
-                }
+            let userSelection = null;
+            let result = 'wrong';
 
-                state.answers[qid] = { selection: userSelection, result: result };
+            if (isMulti) {
+                const selectedBtns = [...box.querySelectorAll('.opt-multi')];
+                const selectedVals = selectedBtns.filter(b => b.dataset.selected === 'true').map(b => b.dataset.value);
                 
-                // Retrieve original question object for applying grading UI
-                const qObj = questions.find(q => q.id === qid);
-                if(qObj) {
-                    applyGradingUI(box, qObj, result);
+                userSelection = selectedVals;
+                if (selectedVals.length > 0) {
+                    const correctSet = new Set(Array.isArray(correctAnswer) ? correctAnswer : [correctAnswer]);
+                    const selectedSet = new Set(selectedVals);
+                    const fullyCorrect = [...correctSet].every(v => selectedSet.has(v)) && selectedSet.size === correctSet.size;
+                    const anyCorrect = [...selectedSet].some(v => correctSet.has(v));
+                    
+                    if (fullyCorrect) result = 'correct';
+                    else if (anyCorrect) result = 'partial';
+                    else result = 'wrong';
                 }
-            });
+            } else if (isTF || type === 'Choose the correct answer') {
+                const selectedBtn = box.querySelector('.opt-single[data-selected="true"]');
+                if (selectedBtn) {
+                    userSelection = selectedBtn.dataset.value;
+                    const correctVal = isTF ? (correctAnswer === true ? 'YES' : 'NO') : correctAnswer;
+                    if (userSelection === correctVal) result = 'correct';
+                    else result = 'wrong';
+                }
+            } else {
+                const textArea = box.querySelector('textarea');
+                if (textArea) userSelection = textArea.value.trim();
+                // Free text is simply marked wrong or partial in static
+                result = 'wrong';
+            }
 
+            if ((!userSelection || (Array.isArray(userSelection) && userSelection.length === 0)) && !confirm('Bạn chưa chọn đáp án nào. Lựa chọn này sẽ tự động bị tính là Sai (Wrong). Tiến tục?')) {
+                return;
+            }
+
+            let state = getMasteryState();
+            state.answers[qid] = { selection: userSelection, result: result };
             saveMasteryState(state);
-            alert('Đã chấm điểm tất cả các câu trên trang!');
+
+            // Re-render UI grading
+            btn.parentElement.remove(); // Xóa nút bấm xác nhận
+            const qObj = questions.find(q => q.id === qid);
+            if(qObj) {
+                applyGradingUI(box, qObj, result);
+            }
+
+            // Chớp nút Trang Sau để nhắc nhở
+            const nextBtn = document.getElementById('btn-mastery-next');
+            if (nextBtn) {
+                nextBtn.classList.add('ring-4', 'ring-blue-300');
+                setTimeout(() => nextBtn.classList.remove('ring-4', 'ring-blue-300'), 1500);
+            }
         }
 
         // Restore saved API key for AI tab
