@@ -189,7 +189,7 @@
 
                 <!-- Tab 1: Luyện tập DUMP -->
                 <div class="bg-white border border-gray-200 rounded-xl p-5 mb-4">
-                    <h3 class="text-base font-bold text-gray-800 mb-2">📝 1. Luyện tập (DUMP)</h3>
+                    <h3 class="text-base font-bold text-gray-800 mb-2">📝 1. Luyện tập (Thi thử DUMP)</h3>
                     <ul class="text-sm text-gray-600 space-y-2 list-disc ml-5">
                         <li>Bấm tab <strong>"Luyện tập (DUMP)"</strong>, sau đó bấm nút <strong>"Làm bài thi thử"</strong> để bắt đầu.</li>
                         <li>Hệ thống sẽ chọn ngẫu nhiên <strong>40 câu hỏi</strong> từ ngân hàng đề có sẵn (dump).</li>
@@ -198,8 +198,8 @@
                         <li>Bấm <strong>"Hoàn thành"</strong> để chấm điểm. Hệ thống sẽ:
                             <ul class="list-disc ml-5 mt-1">
                                 <li>Tô màu viền câu hỏi: <span class="text-green-600 font-semibold">xanh = đúng</span>, <span class="text-yellow-500 font-semibold">vàng = đúng một phần</span>, <span class="text-red-500 font-semibold">đỏ = sai</span></li>
-                                <li>Hiển thị đáp án đúng và giải thích (nếu có)</li>
-                                <li>Tự động lưu kết quả vào <strong>Lịch sử làm bài</strong></li>
+                                <li>Hiển thị đáp án đúng và giải thích (nếu có).</li>
+                                <li>Tự động lưu kết quả vào <strong>Lịch sử làm bài</strong>. Các câu trống sẽ tự động tính sai.</li>
                             </ul>
                         </li>
                         <li>Bấm <strong>"⬇ Tải xuống bài làm"</strong> để lưu bài làm thành file JSON.</li>
@@ -207,13 +207,24 @@
                     </ul>
                 </div>
 
-                <!-- Tab 2: Luyện tập AI -->
+                <!-- Tab 2: Cày toàn bộ DUMP -->
                 <div class="bg-white border border-gray-200 rounded-xl p-5 mb-4">
-                    <h3 class="text-base font-bold text-gray-800 mb-2">🤖 2. Luyện tập (AI)</h3>
+                    <h3 class="text-base font-bold text-gray-800 mb-2">📚 2. Cày toàn bộ DUMP (Mastery Mode)</h3>
+                    <ul class="text-sm text-gray-600 space-y-2 list-disc ml-5">
+                        <li>Bấm tab <strong>"Cày toàn bộ DUMP"</strong>. Chế độ này giúp bạn học và ôn luyện <strong>hết 100%</strong> các câu hỏi trong ngân hàng.</li>
+                        <li>Hệ thống được thiết kế phân trang <strong>20 câu/trang</strong>, tự động <strong>trộn ngẫu nhiên câu hỏi</strong> để phá vỡ nếp học vẹt mỗi khi khởi động tiến trình.</li>
+                        <li>Bấm <strong>"✅ Chấm điểm & Lưu"</strong> ở cuối trang để xem đáp án đúng và giải thích lập tức. Những câu chưa trả lời sẽ được tính là sai và hiển thị đáp án để học.</li>
+                        <li>Hệ thống <strong>tự động sao lưu</strong> vào máy. Bạn có thể đóng trình duyệt, lần tới mở lên sẽ vẫn ở tiến độ cũ. Chọn câu khác và chấm điểm sẽ lưu đè kết quả.</li>
+                    </ul>
+                </div>
+
+                <!-- Tab 3: Luyện tập AI -->
+                <div class="bg-white border border-gray-200 rounded-xl p-5 mb-4">
+                    <h3 class="text-base font-bold text-gray-800 mb-2">🤖 3. Luyện tập (AI)</h3>
                     <ul class="text-sm text-gray-600 space-y-2 list-disc ml-5">
                         <li>Bấm tab <strong>"Luyện tập (AI)"</strong>, nhập <strong>Gemini API Key</strong> của bạn.</li>
                         <li>Bấm <strong>"🚀 Tạo bộ đề & Bắt đầu"</strong> — Gemini AI sẽ tạo ngẫu nhiên 40 câu hỏi SC-900 hoàn toàn mới.</li>
-                        <li>Giao diện làm bài giống chế độ DUMP. Bấm <strong>"Hoàn thành"</strong> để chấm điểm.</li>
+                        <li>Giao diện làm bài giống chế độ thi thử. Bấm <strong>"Hoàn thành"</strong> để chấm điểm.</li>
                         <li>⚠️ Kết quả <strong>không được lưu</strong> vào lịch sử (vì câu hỏi do AI tạo).</li>
                         <li>Bấm <strong>"⬇ Tải bộ đề"</strong> để lưu bộ câu hỏi AI thành file JSON.</li>
                         <li>Bấm <strong>"⬇ Tải xuống bài làm"</strong> để lưu bài làm thành file JSON.</li>
@@ -221,11 +232,11 @@
                     </ul>
                 </div>
 
-                <!-- Tab 3: Lịch sử làm bài -->
+                <!-- Tab 4: Lịch sử làm bài -->
                 <div class="bg-white border border-gray-200 rounded-xl p-5 mb-4">
-                    <h3 class="text-base font-bold text-gray-800 mb-2">📊 3. Lịch sử làm bài</h3>
+                    <h3 class="text-base font-bold text-gray-800 mb-2">📊 4. Lịch sử làm bài</h3>
                     <ul class="text-sm text-gray-600 space-y-2 list-disc ml-5">
-                        <li>Hiển thị bảng tổng hợp tất cả các bài thi đã làm (chế độ DUMP), bao gồm: mã bài thi, người làm, thời gian, số câu đúng/sai, tỉ lệ đúng.</li>
+                        <li>Hiển thị bảng tổng hợp tất cả các bài thi đã làm (chế độ thi thử), bao gồm: mã bài thi, người làm, thời gian, số câu đúng/sai, tỉ lệ đúng.</li>
                         <li><strong>Bấm vào mã bài thi</strong> (ID) để xem lại chi tiết bài làm trong cửa sổ nổi: từng câu hỏi, lựa chọn của bạn, đáp án đúng và giải thích.</li>
                         <li><strong>"⬆ Tải bài làm"</strong>: Tải lên file JSON bài làm đã xuất từ các tab luyện tập. Hỗ trợ chọn nhiều file cùng lúc.</li>
                         <li><strong>"🔍 Phân tích kết quả"</strong>: Sử dụng Gemini AI để phân tích tổng hợp kết quả làm bài:
@@ -239,7 +250,7 @@
 
                 <!-- Loại câu hỏi -->
                 <div class="bg-white border border-gray-200 rounded-xl p-5 mb-4">
-                    <h3 class="text-base font-bold text-gray-800 mb-2">❓ 4. Các dạng câu hỏi</h3>
+                    <h3 class="text-base font-bold text-gray-800 mb-2">❓ 5. Các dạng câu hỏi</h3>
                     <ul class="text-sm text-gray-600 space-y-2 list-disc ml-5">
                         <li><strong>True False (Đúng/Sai):</strong> Chọn YES hoặc NO. Chỉ được chọn 1 đáp án.</li>
                         <li><strong>Choose the correct answer:</strong> Chọn 1 đáp án đúng từ danh sách các lựa chọn.</li>
@@ -249,19 +260,18 @@
 
                 <!-- Mẹo -->
                 <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-5 mb-4">
-                    <h3 class="text-base font-bold text-yellow-700 mb-2">💡 5. Mẹo sử dụng</h3>
+                    <h3 class="text-base font-bold text-yellow-700 mb-2">💡 6. Mẹo sử dụng</h3>
                     <ul class="text-sm text-gray-600 space-y-2 list-disc ml-5">
-                        <li>Làm nhiều bài thi DUMP để hệ thống lưu lịch sử, sau đó dùng <strong>Phân tích kết quả</strong> để biết điểm yếu cần ôn.</li>
-                        <li>Sử dụng chế độ AI để luyện thêm câu hỏi mới ngoài ngân hàng đề dump.</li>
-                        <li>Tải xuống bài làm để lưu trữ hoặc chia sẻ với bạn bè, sau đó dùng <strong>"Tải bài làm"</strong> để import lại.</li>
-                        <li>Dữ liệu lịch sử được lưu trong <strong>Local Storage</strong> của trình duyệt. Xóa dữ liệu trình duyệt sẽ mất lịch sử.</li>
-                        <li>Gemini API Key <strong>chỉ được lưu trong bộ nhớ RAM</strong> (không lưu vào Local Storage) để bảo mật. Key sẽ mất khi bạn tải lại trang và cần nhập lại.</li>
+                        <li>Sử dụng tab <strong>Cày toàn bộ DUMP</strong> để học lần lượt mà không lo lặp câu hỏi.</li>
+                        <li>Làm bài <strong>thi thử DUMP</strong> và xem lại bằng **Phân tích kết quả** để tìm điểm yếu.</li>
+                        <li>Dữ liệu lịch sử được lưu trong <strong>Local Storage</strong>. Xóa dữ liệu duyệt web sẽ mất lịch sử.</li>
+                        <li>Gemini API Key <strong>chỉ được lưu trong bộ nhớ RAM</strong> (không lưu vào Local Storage) để bảo mật.</li>
                     </ul>
                 </div>
 
                 <!-- SC-900 overview -->
                 <div class="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-4">
-                    <h3 class="text-base font-bold text-gray-800 mb-2">🎓 6. Về chứng chỉ SC-900</h3>
+                    <h3 class="text-base font-bold text-gray-800 mb-2">🎓 7. Về chứng chỉ SC-900</h3>
                     <p class="text-sm text-gray-600 leading-relaxed">Chứng chỉ <strong>Microsoft SC-900</strong> kiểm tra kiến thức nền tảng về bảo mật, tuân thủ và quản lý danh tính trong hệ sinh thái Microsoft. Các chủ đề chính:</p>
                     <ul class="text-sm text-gray-600 space-y-1 list-disc ml-5 mt-2">
                         <li><strong>Concepts of Security, Compliance, and Identity</strong> (10–15%)</li>
